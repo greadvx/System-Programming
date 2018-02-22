@@ -1,0 +1,13 @@
+To run files that named LabWorkX - UNIX.cpp you need a UNIX based operation system. 
+To compile use terminal and g++ compiler. 
+
+Example:
+You must type path to the folder with this code and than type:
+
+g++ NAME_OF_FILE.cpp -o NAME_OF_OUTPUT_FILE.out
+
+To run executable file .out you need to type:
+
+.\NAME_OF_OUTPUT_FILE.out
+
+Profit)
