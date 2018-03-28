@@ -1,0 +1,18 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/Users/greadvx/System-Programming/spo-lab2(parent)/main.cpp
+iostream
+-
+csignal
+-
+unistd.h
+-
+list
+-
+
