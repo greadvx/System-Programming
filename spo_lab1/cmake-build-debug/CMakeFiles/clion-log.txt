@@ -1,0 +1,4 @@
+"/Users/greadvx/Library/Application Support/JetBrains/Toolbox/apps/CLion/ch-0/173.4674.29/CLion.app/Contents/bin/cmake/bin/cmake" -DCMAKE_BUILD_TYPE=Debug -G "CodeBlocks - Unix Makefiles" /Users/greadvx/CLionProjects/spo_lab1
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /Users/greadvx/CLionProjects/spo_lab1/cmake-build-debug

@@ -54,7 +54,9 @@ int main() {
                 if (max < array[i])
                     max = array[i];
             }
-            cout << "Maximum is the array is " << max << endl;
+            for (int i = 0; i < arraySize; i++)
+                cout << "C";
+            cout << endl << "Maximum is the array is " << max << endl;
             time(&currentTime);
             cout << "Child exiting at " << ctime(&currentTime) << endl;
         } break;
@@ -68,15 +70,16 @@ int main() {
         //parent
         default: {
             time(&currentTime);
-            wait(&status);          //equivalent to waitpid(-1, &status, 0);
+            //wait(&status);          //equivalent to waitpid(-1, &status, 0);
             cout << endl << "In parent: process ID = " << getpid() << ", fork returned = " << process << endl
                  << "is done waiting at " << ctime(&currentTime);
             for (int i = 0; i < arraySize; i++){
                 if (min > array[i])
                     min = array[i];
             }
-
-            cout << "Minimal in the array is " << min << endl;
+            for (int i = 0; i < arraySize; i++)
+                cout << "P";
+            cout << endl << "Minimal in the array is " << min << endl;
         } break;
     }
     delete array;

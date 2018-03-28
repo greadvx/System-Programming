@@ -1,0 +1,3 @@
+/Users/greadvx/CLionProjects/spo_lab1/cmake-build-debug/CMakeFiles/rebuild_cache.dir
+/Users/greadvx/CLionProjects/spo_lab1/cmake-build-debug/CMakeFiles/edit_cache.dir
+/Users/greadvx/CLionProjects/spo_lab1/cmake-build-debug/CMakeFiles/spo_lab1.dir
