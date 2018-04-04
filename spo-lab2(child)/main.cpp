@@ -3,14 +3,6 @@
 #include <unistd.h>
 #include <sstream>
 
-//namespace patch
-//{
-//    template < typename T > std::string to_string(const T& n) {
-//        std::ostringstream stm ;
-//        stm << n ;
-//        return stm.str() ;
-//    }
-//}
 const static std::string MESSAGE =
 		"AZINO777!!! Problem with "
 				"access?? Add into URL: ";

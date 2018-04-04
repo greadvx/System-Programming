@@ -7,15 +7,15 @@
 #IncludeRegexTransform: 
 
 /Users/greadvx/System-Programming/spo-lab3(server)/main.cpp
-sys/types.h
+iostream
 -
-sys/stat.h
+cstring
 -
-fcntl.h
+sys/ipc.h
 -
-unistd.h
+sys/shm.h
 -
-stdio.h
+sys/sem.h
 -
 cstdlib
 -

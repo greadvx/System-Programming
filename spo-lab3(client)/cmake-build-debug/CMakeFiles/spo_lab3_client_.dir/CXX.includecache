@@ -1,0 +1,24 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/Users/greadvx/System-Programming/spo-lab3(client)/main.cpp
+iostream
+-
+cstring
+-
+sys/ipc.h
+-
+sys/shm.h
+-
+sys/sem.h
+-
+cstdlib
+-
+zconf.h
+-
+

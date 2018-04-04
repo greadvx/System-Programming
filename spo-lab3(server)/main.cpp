@@ -1,80 +1,137 @@
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include <stdio.h>
+#include <iostream>
+#include <cstring>
+#include <sys/ipc.h>
+#include <sys/shm.h>
+#include <sys/sem.h>
 #include <cstdlib>
 
-int main(){
-    int fd, result;
-    size_t size;
-    char resstring[14];
-    char name[]="aaa.fifo";
-    /* Обнуляем маску создания файлов текущего процесса для того,
-    чтобы права доступа у создаваемого FIFO точно соответствовали
-    параметру вызова mknod() */
-    (void)umask(0);
-    /* Попытаемся создать FIFO с именем aaa.fifo в текущей
-    директории */
-    if(mknod(name, S_IFIFO | 0666, 0) < 0){
-        /* Если создать FIFO не удалось, печатаем об этом
-        сообщение и прекращаем работу */
-        printf("Can\'t create FIFO\n");
+using namespace std;
+
+const int size = 255;
+
+const char waitMessage[] = "Waiting for client connection. \n";
+
+void waitForSemaphore(int, int);
+
+void releaseSemaphore(int, int);
+
+int main() {
+
+    //pointer of shared memory
+    char *sharedMemory;
+
+    //IPC descriptor of memory
+    int shmID;
+
+    //IPC descriptor of semaphores
+    int semIDServer;
+
+    //Unique name used to generate unique key (for memory)
+    char pathname[] = "/Users/greadvx/System-Programming/"
+                      "spo-lab3(server)/main.cpp";
+
+    //Unique name used to generate unique key (for semaphores)
+    char pathname2[] = "/Users/greadvx/System-Programming/"
+                      "spo-lab3(client)/main.cpp";
+    //Buffer for reading- writing
+    char buffer[size];
+
+    //IPC keys
+    key_t memoryKey, semKey;
+
+    //Generating unique key
+    if((memoryKey = ftok(pathname, 0)) < 0){
+        printf("Can\'t generate memoryKey\n");
         exit(-1);
     }
-    /* Порождаем новый процесс */
-    if((result = fork()) < 0){
-        /* Если создать процесс не удалось, сообщаем об этом и
-        завершаем работу */
-        printf("Can\'t fork child\n");
+    //Generating unique key
+    if((semKey = ftok(pathname2, 0)) < 0){
+        printf("Can\'t generate memoryKey\n");
         exit(-1);
-    } else if (result > 0) {
-        /* Мы находимся в родительском процессе, который будет
-        передавать информацию процессу-ребенку. В этом процессе
-        открываем FIFO на запись.*/
-        if((fd = open(name, O_WRONLY)) < 0){
-            /* Если открыть FIFO не удалось, печатаем об этом
-            сообщение и прекращаем работу */
-            printf("Can\'t open FIFO for writing\n");
-            exit(-1);
-        }
-        /* Пробуем записать в FIFO 14 байт, т.е. всю строку
-        "Hello, world!" вместе с признаком конца строки */
-        size = write(fd, "Hello, world!", 14);
-        if(size != 14){
-            /* Если записалось меньшее количество байт,то сообщаем
-            об ошибке и завершаем работу */
-            printf("Can\'t write all string to FIFO\n");
-            exit(-1);
-        }
-        /* Закрываем входной поток данных и на этом родитель
-        прекращает работу */
-        close(fd);
-        printf("Parent exit\n");
-    } else {
-        /* Мы находимся в порожденном процессе, который будет
-        получать информацию от процесса-родителя. Открываем
-        FIFO на чтение.*/
-        if((fd = open(name, O_RDONLY)) < 0){
-            /* Если открыть FIFO не удалось, печатаем об этом
-            сообщение и прекращаем работу */
-            printf("Can\'t open FIFO for reading\n");
-            exit(-1);
-        }
-        /* Пробуем прочитать из FIFO 14 байт в массив, т.е.
-        всю записанную строку */
-        size = read(fd, resstring, 14);
-        if(size < 0){
-            /* Если прочитать не смогли, сообщаем об ошибке
-            и завершаем работу */
-            printf("Can\'t read string\n");
-            exit(-1);
-        }
-        /* Печатаем прочитанную строку */
-        printf("%s\n",resstring);
-        /* Закрываем входной поток и завершаем работу */
-        close(fd);
-        remove(name);
     }
+
+
+
+   //Trying to create/access shared memory (0666 - r/w for all users)
+    if((shmID = shmget(memoryKey, size * sizeof(char),
+                       0666|IPC_CREAT|IPC_EXCL)) < 0){
+        //If doesn't exist
+        if(errno != EEXIST){
+            printf("Can\'t create shared memory\n");
+            exit(-1);
+        } else {
+            //Accessing in case of existing
+            if((shmID = shmget(memoryKey, size * sizeof(char), 0)) < 0){
+                printf("Can\'t find shared memory\n");
+                exit(-1);
+            }
+        }
+    }
+    //Creating/getting set of semaphores
+    if ((semIDServer = semget(semKey, 1, 0666 | IPC_CREAT)) < 0){
+        printf("Can\'t get semID\n");
+        exit(-1);
+    }
+    //Init with 0
+    semctl(semIDServer, 0, SETALL, 0);
+
+    //Attaching shared memory in address space
+    if ((sharedMemory = (char *)shmat(shmID, NULL, 0)) == (char *)(-1)){
+        printf("Can't attach shared memory\n");
+        exit(-1);
+    }
+    //waiting for client connection
+    waitForSemaphore(semIDServer, 0);
+    releaseSemaphore(semIDServer, 1);
+
+    printf(waitMessage);
+
+    while(true) {
+
+        printf("\nInput message:");
+
+        fflush(stdin);
+        fgets(buffer, size, stdin);
+
+        strcpy(sharedMemory, buffer);
+        releaseSemaphore(semIDServer, 2);
+
+        releaseSemaphore(semIDServer, 0);	// сообщаем о передаче сообщения
+        waitForSemaphore(semIDServer, 1);    // Ожидаем получения сообщения
+
+        waitForSemaphore(semIDServer, 3);
+        //quitting
+        if (!strcmp(buffer, "q\n")) break;
+    }
+    printf("quited\n");
+
+    //closing shared source
+    if(shmdt(sharedMemory) < 0){
+        printf("Can't detach shared memory\n");
+        exit(-1);
+    }
+    //deleting shared memory and set of semaphores
+    shmctl(shmID, IPC_RMID, NULL);
+    semctl(semIDServer, IPC_RMID, 0);
+
     return 0;
+}
+
+
+//Waiting for counter != 1 and resetting it to 0
+void waitForSemaphore(int semID, int num) {
+    struct sembuf buf;
+    buf.sem_op = -1;
+    buf.sem_flg = SEM_UNDO;
+    buf.sem_num = num;
+    semop(semID, &buf, 1);
+}
+
+//Setting semaphore count into 1
+void releaseSemaphore(int semID, int num) {
+    struct sembuf buf;
+    buf.sem_op = 1;
+    buf.sem_flg = SEM_UNDO;
+    buf.sem_num = num;
+    semop(semID, &buf, 1);
 }

@@ -1,0 +1,26 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/Users/greadvx/System-Programming/spo-lab4/main.cpp
+iostream
+-
+cstring
+-
+vector
+-
+stack
+-
+unistd.h
+-
+termios.h
+-
+ncurses.h
+-
+pthread.h
+-
+
