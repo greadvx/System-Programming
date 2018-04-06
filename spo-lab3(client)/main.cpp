@@ -6,7 +6,7 @@
 #include <cstdlib>
 #include <zconf.h>
 
-const int size = 255;
+const int size = 256;
 
 const char message[] = "received message: ";
 
@@ -36,7 +36,7 @@ int main() {
     char buffer[size];
 
     //IPC keys
-    key_t memoryKey, semKey1;
+    key_t memoryKey, semKey;
 
     //Generating unique key
     if((memoryKey = ftok(pathname, 0)) < 0) {
@@ -45,19 +45,19 @@ int main() {
     }
 
     //Generating unique key
-    if((semKey1 = ftok(pathname2, 0)) < 0){
+    if((semKey = ftok(pathname2, 0)) < 0){
         printf("Can\'t generate memoryKey\n");
         exit(-1);
     }
 
     //Trying to get access to shared memory
-    if((shmid = shmget(memoryKey, 255 * sizeof(char), 0)) < 0) {
+    if((shmid = shmget(memoryKey, size * sizeof(char), 0)) < 0) {
         printf("Can\'t find shared memory\n");
         exit(-1);
     }
 
     //Getting set of semaphores
-    if((semIDServer = semget(semKey1, 1, 0666 )) < 0){
+    if((semIDServer = semget(semKey, 1, 0666 )) < 0){
         printf("Can\'t get semID\n");
         exit(-1);
     }
@@ -78,20 +78,17 @@ int main() {
     while(true) {
 
         //synchronizing
-        waitForSemaphore(semIDServer, 2);
         waitForSemaphore(semIDServer, 0);
-        releaseSemaphore(semIDServer, 1);
 
         //copying data to buffer
         strcpy(buffer, sharedMemory);
 
         //quitting
-        if (!strcmp(buffer, "q\n")) break;
+        if (!strcmp(buffer, "q")) break;
 
         printf(message);
-        printf("%s", buffer);
-
-        releaseSemaphore(semIDServer, 3);
+        printf("%s\n", buffer);
+        releaseSemaphore(semIDServer, 1);
     }
 
     //closing shared source

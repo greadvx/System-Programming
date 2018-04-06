@@ -7,7 +7,7 @@
 
 using namespace std;
 
-const int size = 255;
+const int size = 256;
 
 const char waitMessage[] = "Waiting for client connection. \n";
 
@@ -35,6 +35,7 @@ int main() {
                       "spo-lab3(client)/main.cpp";
     //Buffer for reading- writing
     char buffer[size];
+    string bufferString;
 
     //IPC keys
     key_t memoryKey, semKey;
@@ -80,28 +81,27 @@ int main() {
         printf("Can't attach shared memory\n");
         exit(-1);
     }
+    printf(waitMessage);
     //waiting for client connection
     waitForSemaphore(semIDServer, 0);
     releaseSemaphore(semIDServer, 1);
-
-    printf(waitMessage);
-
+    cout << "q - to exit" << endl;
+    cout << endl << "Input messages:" << endl;
+    fflush(stdin);
     while(true) {
 
-        printf("\nInput message:");
 
-        fflush(stdin);
-        fgets(buffer, size, stdin);
-
+        cin.getline(buffer, size);
+        if (cin.fail()) {
+            cin.clear();
+        }
         strcpy(sharedMemory, buffer);
-        releaseSemaphore(semIDServer, 2);
 
         releaseSemaphore(semIDServer, 0);	// сообщаем о передаче сообщения
         waitForSemaphore(semIDServer, 1);    // Ожидаем получения сообщения
 
-        waitForSemaphore(semIDServer, 3);
         //quitting
-        if (!strcmp(buffer, "q\n")) break;
+        if (!strcmp(buffer, "q")) break;
     }
     printf("quited\n");
 
