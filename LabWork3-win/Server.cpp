@@ -39,6 +39,10 @@ void main(VOID)
 	while (true)
 	{
 		cin.getline(string, 256);
+		if (cin.fail())
+		{
+			cin.clear();
+		}
 		WriteFile(myPipe, string, strlen(string) + 1, &cbWritten, NULL);
 		
 		cout << "data has been sent" << endl;
