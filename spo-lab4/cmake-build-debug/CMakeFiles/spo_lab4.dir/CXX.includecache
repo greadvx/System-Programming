@@ -17,10 +17,6 @@ stack
 -
 unistd.h
 -
-termios.h
--
-ncurses.h
--
 pthread.h
 -
 

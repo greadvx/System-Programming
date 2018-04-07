@@ -3,8 +3,6 @@
 #include <vector>
 #include <stack>
 #include <unistd.h>
-#include <termios.h>
-#include <ncurses.h>
 #include <pthread.h>
 
 using namespace std;
@@ -107,8 +105,8 @@ int main() {
 }
 
 
-void closeLastThread()
-{
+void closeLastThread() {
+    if (threads.empty()) return;
     closingThreads.push(threads.top()); // Добавляем id последнего потока в стек закрывающихся потоков
 
     *(quitFlags.back()) = true;   // Устанавливаем флаг выхода для последнего потока
@@ -118,8 +116,7 @@ void closeLastThread()
     threads.pop();				  // Удаляем id последнего потока
 }
 
-void synchronizeThreads()
-{
+void synchronizeThreads() {
     while(closingThreads.size() > 0) {
         pthread_join(closingThreads.top(), NULL); // Ожидаем завершения последнего потока
         closingThreads.pop();
@@ -143,23 +140,26 @@ void addNewThread() {
 }
 
 void* printString(void* arg) {
-    //	usleep(1000000); // для проверки на ошибки
 
-    bool *qFlag = (*(threadArg*)arg).quitFlag;   // Указатель на флаг выхода для данного потока
-    int threadNumber = (*(threadArg*)arg).num;   // Номер данного потока
+    bool *qFlag = ((threadArg*)arg)->quitFlag;   // Указатель на флаг выхода для данного потока
+    int threadNumber = ((threadArg*)arg)->num;   // Номер данного потока
     delete (threadArg*)arg;
 
     while(true) {
 
         if(*qFlag) break;
-
-        pthread_mutex_lock(&pthreadMutex);
-        if(*qFlag) break;
-        cout << uniqueStrings[threadNumber] << endl;
         sleep(1);
+        //blocking
+        pthread_mutex_lock(&pthreadMutex);
 
+        if(*qFlag) break;
+
+        cout << uniqueStrings[threadNumber] << endl;
+
+        //unblocking
         pthread_mutex_unlock(&pthreadMutex);
-        sleep(2);
+
+        sleep(1);
     }
     delete qFlag;
     return NULL;
