@@ -1,11 +1,12 @@
 //
-//  test.c
-//  test
+//  library.c
+//  spo-lib
 //
-//  Created by Yan Khamutouski on 4/20/18.
+//  This library is created for macOS 10.13 High Sierra
+//
+//  Created by Yan Khamutouski on 4/21/18.
 //  Copyright © 2018 Yan Khamutouski. All rights reserved.
 //
-
 #include <stdio.h>
 #include <unistd.h>
 #include <aio.h>
@@ -14,12 +15,19 @@
 #include <pthread.h>
 #include <dirent.h>
 #include <errno.h>
+#include <dlfcn.h>
 
 const int SIZE_OF_BUFFER = 1024;
 
 struct asyncOperations {
-    //descriptor of file
+    //flag read
+    bool readInit;
+    bool readFinished;
+    bool iteration;
+    //descriptor of file r
     int descOfFile;
+    
+    int descofFileW;
     //buffer for reading
     char buffer[SIZE_OF_BUFFER];
     //bytes read
@@ -32,25 +40,17 @@ struct asyncOperations {
     struct aiocb asyncIO;
 };
 
-int read_async(struct asyncOperations *information) {
+void read_async(struct asyncOperations *information) {
     information->asyncIO.aio_offset = information->pointerR;
     information->asyncIO.aio_fildes = information->descOfFile;
     information->asyncIO.aio_nbytes = information->bytes;
     information->asyncIO.aio_buf = information->buffer;
     aio_read(&information->asyncIO);
     
-    while(aio_error(&information->asyncIO) == EINPROGRESS);
-    information->bytesMoved = aio_return(&information->asyncIO);
-    
-    if(information->bytesMoved)
-        information->pointerR = information->pointerR + information->bytesMoved;
-    
-    return information->bytesMoved;
 }
-
 int write_async(struct asyncOperations *information) {
     information->asyncIO.aio_offset = information->pointerW;
-    information->asyncIO.aio_fildes = information->descOfFile;
+    information->asyncIO.aio_fildes = information->descofFileW;
     information->asyncIO.aio_nbytes = information->bytesMoved;
     information->asyncIO.aio_buf = information->buffer;
     aio_write(&information->asyncIO);
@@ -58,8 +58,5 @@ int write_async(struct asyncOperations *information) {
     int writeResult;
     while((writeResult = aio_error(&information->asyncIO)) == EINPROGRESS);
     
-    information->pointerW = information->pointerW + aio_return(&information->asyncIO);
-    
     return writeResult;
 }
-

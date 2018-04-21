@@ -2,6 +2,7 @@
 #include <unistd.h>
 #include <aio.h>
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <fcntl.h>
 #include <pthread.h>
 #include <dirent.h>
@@ -26,8 +27,16 @@ const int ERROR_LIB = -4;
 const int ERROR_FIND = -5;
 
 struct asyncOperations {
-    //descriptor of file
+    //flag read
+    bool readInit;
+    bool readFinished;
+
+    bool iteration = false;
+
+    //descriptor of file r
     int descOfFile;
+
+    int descofFileW;
     //buffer for reading
     char buffer[SIZE_OF_BUFFER];
     //bytes read
@@ -38,7 +47,7 @@ struct asyncOperations {
     off_t pointerW;
     //struct for async r/w
     struct aiocb asyncIO;
-}information;
+};
 
 using namespace std;
 
@@ -54,12 +63,12 @@ void* readingThread(void* arg);
 //prototype of function of writing thread
 void* writingThread(void* arg);
 
-int (*read_async) (struct asyncOperations *);
+void (*read_async) (struct asyncOperations *);
 int (*write_async) (struct asyncOperations *);
 
+pthread_mutex_t mutexS;
 
-//object of mutex for sync
-pthread_mutex_t pthreadMutex;
+list <asyncOperations*> readyToWrite;
 
 int main(int argc, char *argv[]) {
 
@@ -74,14 +83,18 @@ int main(int argc, char *argv[]) {
         getchar();
         return ERROR_CMD;
     }
+    if (pthread_mutex_init(&mutexS, NULL)) {
+        cout << errorWithInit << endl;
+        return ERROR_INIT;
+    }
     //opening the library
-    void *lib = dlopen("./spo-lib.dylib",RTLD_NOW);
+    void *lib = dlopen("./libspo-lib.dylib", RTLD_NOW);
     if(lib == NULL) {
         printf("Library ERROR");
         return ERROR_LIB;
     }
     //searching for such function
-    read_async = (int(*)(struct asyncOperations*))dlsym(lib,"read_async");
+    read_async = (void(*)(struct asyncOperations*))dlsym(lib,"read_async");
     if (!read_async) {
         cout << errorWithFounding << endl;
         cout << dlerror() << endl;
@@ -96,12 +109,6 @@ int main(int argc, char *argv[]) {
         return ERROR_FIND;
 
     }
-    //initializing of mutex
-    if(pthread_mutex_init(&pthreadMutex, NULL) != 0) {
-        cout << errorWithInit << endl;
-        return ERROR_INIT;
-    }
-
     //id of reading thread
     pthread_t readingThread;
     readingThread = createRThread(argv[1]);
@@ -166,17 +173,17 @@ pthread_t createWThread(const char* folderPath) {
 
 
 void* readingThread(void* arg) {
-    bool block = true;
-    pthread_mutex_lock(&pthreadMutex);
-    block = false;
+    pthread_mutex_lock(&mutexS);
     string path;
     path.append((char*)arg);
 
     //list of files that are stored in folder
     list<string> filesList;
+    list<asyncOperations> buffers;
 
     DIR *dirp;
     struct dirent *directory;
+
     dirp = opendir(path.c_str());
 
     if (dirp) {
@@ -191,80 +198,98 @@ void* readingThread(void* arg) {
                 fullPath.append(path);
                 fullPath.append("/");
                 fullPath.append(match);
-
-                //adding files in list.
                 filesList.push_back(fullPath);
             }
         }
         closedir(dirp);
     }
-    int rDescriptor = 0;
-    int readResult = 0;
-    while(true) {
-        if(block)
-            pthread_mutex_lock(&pthreadMutex);
-        if (readResult == 0) {
-            information.pointerR = 0;
-            information.bytes = SIZE_OF_BUFFER;
-            rDescriptor = open(filesList.front().c_str(), O_RDONLY);
+    int counter = 0;
+    do{
+        struct asyncOperations *information = new asyncOperations();
+        information->pointerR = 0;
+        information->bytes = SIZE_OF_BUFFER;
+
+        int rDescriptor;
+        rDescriptor = open(filesList.front().c_str(), O_RDONLY);
+        filesList.pop_front();
+
+        information->descOfFile = rDescriptor;
+        information->readInit = true;
+        readyToWrite.push_back(information);
+        counter++;
+        read_async(information);
+    }while(filesList.empty() == false);
+    bool flag = false;
+    while(!readyToWrite.empty()) {
+        if(flag) {
+            pthread_mutex_lock(&mutexS);
+            flag = false;
         }
-        information.descOfFile = rDescriptor;
 
-        readResult = read_async(&information);
+        if (readyToWrite.empty()) break;
 
-        //if end of file
-        if (readResult == 0) {
-            cout << "added " << filesList.front() << endl;
-            filesList.pop_front();
-            close(rDescriptor);
-            if (filesList.empty()) {
-                strcpy(information.buffer, "\0");
-                pthread_mutex_unlock(&pthreadMutex);
-                break;
+        if (readyToWrite.front()->iteration) {
+            pthread_mutex_lock(&mutexS);
+            read_async(readyToWrite.front());
+            readyToWrite.front()->iteration = false;
+        }
+        //reading is ended
+        if (aio_error(&readyToWrite.front()->asyncIO) == 0) {
+            //returned quantity of bytes is 0
+            int readResult = aio_return(&readyToWrite.front()->asyncIO);
+            if (readResult == 0) {
+                readyToWrite.front()->bytesMoved = readResult;
+                readyToWrite.front()->readFinished = true;
+                readyToWrite.front()->readInit = false;
+                readyToWrite.front()->iteration = false;
+                pthread_mutex_unlock(&mutexS);
+                flag = true;
             }
+            //returned quantity of bytes is not 0
             else {
-                pthread_mutex_unlock(&pthreadMutex);
-                block = true;
+                flag = false;
+                readyToWrite.front()->bytesMoved = readResult;
+                readyToWrite.front()->pointerR += readyToWrite.front()->bytesMoved;
+                readyToWrite.front()->iteration = true;
+                pthread_mutex_unlock(&mutexS);
+                }
             }
-        }
-        else {
-            block = true;
-            pthread_mutex_unlock(&pthreadMutex);
-        }
     }
     return NULL;
 }
 
 void* writingThread(void* arg) {
-    bool flag;
-    pthread_mutex_lock(&pthreadMutex);
-    flag = true;
 
+    pthread_mutex_lock(&mutexS);
+    int numberOfFile = 0;
     string pathToResultFile;
     pathToResultFile.append((char*)arg);
     pathToResultFile.append("/result.txt");
-
+    off_t offset = 0;
+    off_t current = 0;
+    bool flag;
     int wDescriptor = open(pathToResultFile.c_str(), O_WRONLY | O_CREAT, S_IRWXU);
 
-    while(true) {
-
-        //blocking
-        if (!flag)
-            pthread_mutex_lock(&pthreadMutex);
-
-        information.descOfFile = wDescriptor;
-
-        //condition for quit
-        if (!strcmp(information.buffer, "\0")) {
-            pthread_mutex_unlock(&pthreadMutex);
-            break;
+    while(!readyToWrite.empty()) {
+        if (flag)
+            pthread_mutex_lock(&mutexS);
+        if (readyToWrite.front()->readFinished || readyToWrite.front()->iteration) {
+            readyToWrite.front()->descofFileW = wDescriptor;
+            readyToWrite.front()->pointerW = offset;
+            write_async(readyToWrite.front());
+            current = aio_return(&readyToWrite.front()->asyncIO);
+            offset += current;
+            if (readyToWrite.front()->readFinished) {
+                numberOfFile += 1;
+                cout << "Content of file #" << numberOfFile
+                     << " has been written to result file successful!" << endl;
+                close(readyToWrite.front()->descOfFile);
+                readyToWrite.pop_front();
+            }
+            flag = true;
+            pthread_mutex_unlock(&mutexS);
         }
-        //async writing
-        write_async(&information);
-
-        //unblocking
-        flag = false;
-        pthread_mutex_unlock(&pthreadMutex);
     }
+    close(wDescriptor);
     return NULL;
 }

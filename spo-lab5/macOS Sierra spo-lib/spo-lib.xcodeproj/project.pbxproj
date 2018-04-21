@@ -7,16 +7,16 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		638DDD84208A589D00003107 /* test.c in Sources */ = {isa = PBXBuildFile; fileRef = 638DDD83208A589D00003107 /* test.c */; };
+		639379EE208BA66F0022923B /* library.c in Sources */ = {isa = PBXBuildFile; fileRef = 639379ED208BA66F0022923B /* library.c */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		638DDD7C208A588E00003107 /* libtest.dylib */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = libtest.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
-		638DDD83208A589D00003107 /* test.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = test.c; sourceTree = "<group>"; };
+		639379E6208BA6620022923B /* libspo-lib.dylib */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = "libspo-lib.dylib"; sourceTree = BUILT_PRODUCTS_DIR; };
+		639379ED208BA66F0022923B /* library.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = library.c; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
-		638DDD79208A588E00003107 /* Frameworks */ = {
+		639379E3208BA6620022923B /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -26,18 +26,18 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		638DDD73208A588E00003107 = {
+		639379DD208BA6620022923B = {
 			isa = PBXGroup;
 			children = (
-				638DDD83208A589D00003107 /* test.c */,
-				638DDD7D208A588E00003107 /* Products */,
+				639379ED208BA66F0022923B /* library.c */,
+				639379E7208BA6620022923B /* Products */,
 			);
 			sourceTree = "<group>";
 		};
-		638DDD7D208A588E00003107 /* Products */ = {
+		639379E7208BA6620022923B /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				638DDD7C208A588E00003107 /* libtest.dylib */,
+				639379E6208BA6620022923B /* libspo-lib.dylib */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -45,7 +45,7 @@
 /* End PBXGroup section */
 
 /* Begin PBXHeadersBuildPhase section */
-		638DDD7A208A588E00003107 /* Headers */ = {
+		639379E4208BA6620022923B /* Headers */ = {
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -55,67 +55,67 @@
 /* End PBXHeadersBuildPhase section */
 
 /* Begin PBXNativeTarget section */
-		638DDD7B208A588E00003107 /* test */ = {
+		639379E5208BA6620022923B /* spo-lib */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 638DDD80208A588E00003107 /* Build configuration list for PBXNativeTarget "test" */;
+			buildConfigurationList = 639379EA208BA6620022923B /* Build configuration list for PBXNativeTarget "spo-lib" */;
 			buildPhases = (
-				638DDD78208A588E00003107 /* Sources */,
-				638DDD79208A588E00003107 /* Frameworks */,
-				638DDD7A208A588E00003107 /* Headers */,
+				639379E2208BA6620022923B /* Sources */,
+				639379E3208BA6620022923B /* Frameworks */,
+				639379E4208BA6620022923B /* Headers */,
 			);
 			buildRules = (
 			);
 			dependencies = (
 			);
-			name = test;
-			productName = test;
-			productReference = 638DDD7C208A588E00003107 /* libtest.dylib */;
+			name = "spo-lib";
+			productName = "spo-lib";
+			productReference = 639379E6208BA6620022923B /* libspo-lib.dylib */;
 			productType = "com.apple.product-type.library.dynamic";
 		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
-		638DDD74208A588E00003107 /* Project object */ = {
+		639379DE208BA6620022923B /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
 				LastUpgradeCheck = 0930;
 				ORGANIZATIONNAME = "Yan Khamutouski";
 				TargetAttributes = {
-					638DDD7B208A588E00003107 = {
+					639379E5208BA6620022923B = {
 						CreatedOnToolsVersion = 9.3;
 					};
 				};
 			};
-			buildConfigurationList = 638DDD77208A588E00003107 /* Build configuration list for PBXProject "test" */;
+			buildConfigurationList = 639379E1208BA6620022923B /* Build configuration list for PBXProject "spo-lib" */;
 			compatibilityVersion = "Xcode 9.3";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
 				en,
 			);
-			mainGroup = 638DDD73208A588E00003107;
-			productRefGroup = 638DDD7D208A588E00003107 /* Products */;
+			mainGroup = 639379DD208BA6620022923B;
+			productRefGroup = 639379E7208BA6620022923B /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				638DDD7B208A588E00003107 /* test */,
+				639379E5208BA6620022923B /* spo-lib */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXSourcesBuildPhase section */
-		638DDD78208A588E00003107 /* Sources */ = {
+		639379E2208BA6620022923B /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				638DDD84208A589D00003107 /* test.c in Sources */,
+				639379EE208BA66F0022923B /* library.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin XCBuildConfiguration section */
-		638DDD7E208A588E00003107 /* Debug */ = {
+		639379E8208BA6620022923B /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -173,7 +173,7 @@
 			};
 			name = Debug;
 		};
-		638DDD7F208A588E00003107 /* Release */ = {
+		639379E9208BA6620022923B /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -224,7 +224,7 @@
 			};
 			name = Release;
 		};
-		638DDD81208A588E00003107 /* Debug */ = {
+		639379EB208BA6620022923B /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
@@ -237,7 +237,7 @@
 			};
 			name = Debug;
 		};
-		638DDD82208A588E00003107 /* Release */ = {
+		639379EC208BA6620022923B /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
@@ -253,25 +253,25 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		638DDD77208A588E00003107 /* Build configuration list for PBXProject "test" */ = {
+		639379E1208BA6620022923B /* Build configuration list for PBXProject "spo-lib" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				638DDD7E208A588E00003107 /* Debug */,
-				638DDD7F208A588E00003107 /* Release */,
+				639379E8208BA6620022923B /* Debug */,
+				639379E9208BA6620022923B /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		638DDD80208A588E00003107 /* Build configuration list for PBXNativeTarget "test" */ = {
+		639379EA208BA6620022923B /* Build configuration list for PBXNativeTarget "spo-lib" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				638DDD81208A588E00003107 /* Debug */,
-				638DDD82208A588E00003107 /* Release */,
+				639379EB208BA6620022923B /* Debug */,
+				639379EC208BA6620022923B /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
-	rootObject = 638DDD74208A588E00003107 /* Project object */;
+	rootObject = 639379DE208BA6620022923B /* Project object */;
 }
