@@ -53,6 +53,7 @@ FileRecord &FileRecord::operator=(FileRecord &rec) {
     this->sizeOfCurrentPart = rec.sizeOfCurrentPart;
     this->busy = rec.busy;
     this->recordNumber = rec.recordNumber;
+    return *this;
 }
 
 FileRecord::FileRecord(const FileRecord &rec) {

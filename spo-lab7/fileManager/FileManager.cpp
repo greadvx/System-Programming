@@ -13,12 +13,11 @@ FileManager::FileManager(string nameOfFile) {
 
 void FileManager::fillAllFilesTable() {
     ///reading quantity of records
-    //TODO: append info in free cells
-    //this->moveReadPointer(0);
-//    int z = 10;
+    this->moveReadPointer(0);
+    this->moveWritePointer(0);
+//    int z = 0;
 //    filesystem.write(reinterpret_cast<char*>(&z), sizeof(z));
-    filesystem.seekp(ios::beg);
-    filesystem.seekg(ios::beg);
+//    this->filler(0);
     filesystem.read(reinterpret_cast<char*>(&countOfRecords), sizeof(int));
     while(this->countOfRecords){
         FileRecord record = this->readRecord();
@@ -32,20 +31,23 @@ void FileManager::fillAllFilesTable() {
 
 bool FileManager::createFileSystem() {
     ///creating FS file
-    filesystem.open("virtual_file_system", ios::in | ios::out | ios::app | ios::binary);
+    filesystem.open("virtual_file_system", ios::in | ios::out | ios::ate | ios::binary);
     if (filesystem.is_open()) return true;
     else return false;
 }
 
 bool FileManager::ls() {
+
+    //TODO: check for set busy flag!!!!
     ///cout fileName and its size
     if (allFilesTable.size() == 0) {
         return false;
     }
-
+    cout << setw(25) << "Name of file:" <<
+         setw(10) << "Size:" << endl;
     for (auto it = allFilesTable.begin();
             it != allFilesTable.end(); it++) {
-        if ((*it).isFirstPart()) {
+        if ((*it).isFirstPart() && (*it).getBusyFlag()) {
             cout << setw(25) << (*it).getFileName()
                  << setw(10) << (*it).getSizeOfFile() << endl;
         }
@@ -64,7 +66,7 @@ bool FileManager::create() {
     while(true) {
         cout << "Input name of file (25 symbols max):";
         cin >> name;
-        if (name.length() <=24) break;
+        if (name.length() <= 24) break;
     }
     cout << "Input data to write:";
     cin >> dataToWrite;
@@ -81,22 +83,36 @@ bool FileManager::create() {
     if (numberOfFreeCell >= 0) {
         allFilesTable[numberOfFreeCell].setBusyFlag(true);
         currOffset = allFilesTable[numberOfFreeCell].getOffset();
-        this->moveWritePointer(currOffset);
         allFilesTable[numberOfFreeCell].setNewFileName(name.c_str());
         allFilesTable[numberOfFreeCell].setRecordNumber(true);
         allFilesTable[numberOfFreeCell].setFileSize(sizeOfInputedData);
-        this->filesystem.write(dataToWrite.c_str(), sizeOfInputedData);
+        this->moveWritePointer(currOffset);
+        int size = sizeOfInputedData;
+        char buffer[sizeOfInputedData];
+        strcpy(buffer, dataToWrite.c_str());
+        strcat(buffer, "\0");
+        this->filesystem.write(reinterpret_cast<char*>(&buffer), sizeOfInputedData);
         return true;
     }
     if (allFilesTable.empty()) {
-        currOffset = offsetBorderForFilesTable + 1;
+        currOffset = offsetBorderForFilesTable;
     } else {
-        ///Тут добавить вариант поиска для записи в уже существовавшую но удаленную ячейку
         currOffset = allFilesTable.back().getOffset()
-                     + allFilesTable.back().getSizeOfFile() + 1;
+                     + allFilesTable.back().getSizeOfFile();
     }
     FileRecord newRec(name.c_str(), sizeOfInputedData, currOffset);
+
+    this->moveWritePointer(currOffset);
+    if (!filesystem.good())
+        filesystem.clear();
+
+    char buffer[sizeOfInputedData];
+    strcpy(buffer, dataToWrite.c_str());
+
+    filesystem.write(buffer, sizeOfInputedData);
+
     allFilesTable.push_back(newRec);
+    this->refresh();
     return true;
 }
 
@@ -117,17 +133,21 @@ bool FileManager::open(string file) {
     /// (1st record, if it have filled row HAS_ANOTHER_PART searching
     /// for all)
     if (allFilesTable.empty()) return false;
-    string content;
     bool flag = false;
     int numberOfRecordInTable;
     cout << endl << "Content of file: " << file << ":"<< endl;
     for (auto it = allFilesTable.begin(); it != allFilesTable.end(); it++) {
-        if ((*it).getFileName() == file){
+        if ((*it).getFileName() == file && (*it).getBusyFlag()){
             if ((*it).isFirstPart()) {
                 flag = (*it).getAnotherPartExistence();
+                int size = (*it).getSizeOfFile();
+                char content[size];
                 this->moveReadPointer((*it).getOffset());
-                this->filesystem.read(reinterpret_cast<char*>(&content), (*it).getSizeOfFile());
-                cout << content;
+                this->filesystem.read(content, size);
+                this->moveReadPointer(0);
+                this->moveWritePointer(0);
+                string contentStr(content);
+                cout << contentStr;
                 if (flag)
                     numberOfRecordInTable = (*it).getNumberOfNextPart();
                 break;
@@ -140,9 +160,12 @@ bool FileManager::open(string file) {
         long int offset;
         offset = allFilesTable[numberOfRecordInTable].getOffset();
         this->moveReadPointer(offset);
-        this->filesystem.read(reinterpret_cast<char*>(&content),
-                              allFilesTable[numberOfRecordInTable].getSizeOfFile());
-        cout << " " << content;
+        int size = allFilesTable[numberOfRecordInTable].getSizeOfFile();
+        char content[size];
+        this->filesystem.read(reinterpret_cast<char*>(&content), size);
+        string contentString(content);
+        fflush(stdin);
+        cout << " " << contentString;
         if (allFilesTable[numberOfRecordInTable].getAnotherPartExistence()) {
             flag = true;
             int temp = allFilesTable[numberOfRecordInTable].getNumberOfNextPart();
@@ -174,7 +197,6 @@ FileRecord FileManager::readRecord() {
 
 void FileManager::writeRecord(FileRecord record) {
     filesystem.write(reinterpret_cast<char*>(&record), sizeof(FileRecord));
-
 }
 
 int FileManager::append(string toFile) {
@@ -182,10 +204,10 @@ int FileManager::append(string toFile) {
     string information;
     fflush(stdin);
     cin >> information;
-
+    int length = information.length();
     int numberInTable = -1;
     for (auto it = freeCells.begin(); it != freeCells.end(); it++) {
-        if ((*it).first >= information.length() + 1) {
+        if ((*it).first >= information.length()) {
             numberInTable = (*it).second;
             freeCells.erase(it);
         }
@@ -193,16 +215,15 @@ int FileManager::append(string toFile) {
     if (numberInTable != -1) {
         allFilesTable[numberInTable].setNewFileName(toFile.c_str());
         allFilesTable[numberInTable].setBusyFlag(true);
-        allFilesTable[numberInTable].setFileSize(information.length() + 1);
+        allFilesTable[numberInTable].setFileSize(information.length());
         allFilesTable[numberInTable].setRecordNumber(false);
         this->moveWritePointer(allFilesTable[numberInTable].getOffset());
-        this->filesystem.write(information.c_str(), information.length() + 1);
+        this->filesystem.write(information.c_str(), information.length());
     }
 
-    FileRecord newRecord(toFile.c_str(), sizeof(information),
+    FileRecord newRecord(toFile.c_str(), length,
                          allFilesTable.back().getOffset()
                          + allFilesTable.back().getSizeOfFile()
-                         + 1
     );
     newRecord.setRecordNumber(false);
     allFilesTable.push_back(newRecord);
@@ -227,11 +248,11 @@ void FileManager::writeCountOfElements(int count) {
 }
 
 long int FileManager::getCurrentWritePosInFileSystem() {
-    this->filesystem.tellp();
+    return this->filesystem.tellp();
 }
 
 long int FileManager::getCurrentReadPosInFileSystem() {
-    this->filesystem.tellg();
+    return this->filesystem.tellg();
 }
 
 string FileManager::readFrom(FileRecord record) {
@@ -244,13 +265,11 @@ string FileManager::readFrom(FileRecord record) {
 void FileManager::quit() {
     int count = this->allFilesTable.size();
     this->writeCountOfElements(count);
-//    cout << filesystem.tellp();
-//    cout << filesystem.tellg();
-//    for (auto it = allFilesTable.begin();
-//            it != allFilesTable.end(); it++) {
-//        ///writing our
-//        this->writeRecord((*it));
-//    }
+    for (auto it = allFilesTable.begin();
+            it != allFilesTable.end(); it++) {
+        ///writing our
+        this->writeRecord((*it));
+    }
 }
 
 bool FileManager::appendInfo(string toFile) {
@@ -263,6 +282,24 @@ bool FileManager::appendInfo(string toFile) {
         }
     }
     return true;
+}
+
+void FileManager::filler(int howMuchWeHaveFilled) {
+    int count = 20;
+    long int offset = sizeof(int);    ///start pos for write
+    count -= howMuchWeHaveFilled;
+    FileRecord emptyRecord("empty", 0, 0);
+    while(count--)
+        filesystem.write(reinterpret_cast<char*>(&emptyRecord), sizeof(FileRecord));
+}
+
+void FileManager::refresh() {
+    fpos put = filesystem.tellp();
+    fpos get = filesystem.tellg();
+    filesystem.close();
+    filesystem.open("virtual_file_system", ios::in | ios::out | ios::ate | ios::binary);
+    this->moveWritePointer(put);
+    this->moveReadPointer(get);
 }
 
 

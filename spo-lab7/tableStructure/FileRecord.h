@@ -47,6 +47,4 @@ public:
     void setFileSize(int size);
 };
 
-//TODO: прохендлить ситуацию когда у нас начало файла находится позже продолжения
-
 #endif //SPO_LAB7_FILERECORD_H

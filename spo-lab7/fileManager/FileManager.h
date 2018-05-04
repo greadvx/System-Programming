@@ -20,7 +20,7 @@ const int MAX_COUNT_OF_FILES = 20;
 
 const long int offsetBorderForFilesTable = sizeof(FileRecord)
         * MAX_COUNT_OF_FILES + sizeof(int);
-const long int offsetStartForFilesTable = sizeof(int) + 1;
+const long int offsetStartForFilesTable = sizeof(int);
 
 using namespace std;
 
@@ -44,6 +44,9 @@ class FileManager {
     void moveWritePointer(long int offset);
     void writeCountOfElements(int count);
     string readFrom(FileRecord record);
+    void filler(int how);
+    void refresh();
+
 
 public:
     ///constructor of fileManager
