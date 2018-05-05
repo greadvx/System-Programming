@@ -38,21 +38,36 @@ bool FileManager::createFileSystem() {
 
 bool FileManager::ls() {
 
-    //TODO: check for set busy flag!!!!
+    //TODO: collection with sum of getsizes!!!
     ///cout fileName and its size
     if (allFilesTable.size() == 0) {
         return false;
     }
-    cout << setw(25) << "Name of file:" <<
-         setw(10) << "Size:" << endl;
-    for (auto it = allFilesTable.begin();
-            it != allFilesTable.end(); it++) {
-        if ((*it).isFirstPart() && (*it).getBusyFlag()) {
-            cout << setw(25) << (*it).getFileName()
-                 << setw(10) << (*it).getSizeOfFile() << endl;
+    map<string, int> listing;
+    for (auto it = allFilesTable.begin(); it != allFilesTable.end(); it++)
+        if ((*it).isFirstPart())
+            listing.insert(pair((*it).getFileName(), (*it).getSizeOfFile()));
+    for (auto it = allFilesTable.begin(); it != allFilesTable.end(); it++) {
+        if ((*it).getAnotherPartExistence()) {
+            //поиск по map и модификация размера
+            auto mapIter = listing.find((*it).getFileName());
+            (*mapIter).second += (*it).getSizeOfFile();
         }
     }
-
+    cout << setw(25) << "Name of file:" <<
+         setw(10) << "Size:" << endl;
+//    for (auto it = allFilesTable.begin();
+//            it != allFilesTable.end(); it++) {
+//        if ((*it).isFirstPart() && (*it).getBusyFlag()) {
+//            cout << setw(25) << (*it).getFileName()
+//                 << setw(10) << (*it).getSizeOfFile() << endl;
+//        }
+//}
+    for (auto it = listing.begin(); it != listing.end(); it++) {
+        cout << setw(25) << (*it).first
+             << setw(15) << (*it).second << endl;
+    }
+    listing.clear();
 }
 
 bool FileManager::create() {

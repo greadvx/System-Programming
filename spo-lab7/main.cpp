@@ -6,15 +6,16 @@
 using namespace std;
 
 void help();
-pair<string, string> searchForCommandAndName(string toPharse);
+pair<string, string> searchForCommandAndName(string toParse);
 
 
 int main() {
     ///creating an object of file manager
     FileManager manager("virtual_file_system");
+    manager.fillAllFilesTable();
     char buffer[80];
     while(true){
-        cout << "V:/";
+        cout << endl <<"V:/";
         fflush(stdin);
         cin.getline(buffer, 80);
         string toParse(buffer);
@@ -29,26 +30,38 @@ int main() {
         }
         if (parsed.first == "del") {
             //проверка на наличие пробела find должна вернуть -1
-            manager.del(parsed.second);
+            if (parsed.second.find(" ") == -1)
+                manager.del(parsed.second);
+            else cout << endl <<"Error in command! Use help" << endl;
         }
         if (parsed.first == "rename") {
-            //парсим еще раз second
-            //иначе ошибка
-            manager.rename("", "");
+
+            pair<string, string> names = searchForCommandAndName(parsed.second);
+            if (names.first.find(" ") == -1 && names.second.find(" ") == -1)
+                manager.rename(names.first, names.second);
+            else cout << endl << "Error in command! Use help" << endl;
         }
         if (parsed.first == "open") {
             //проверка на наличие пробела find должна вернуть -1
-            manager.open(parsed.second);
+            if (parsed.second.find(" ") == -1)
+                manager.open(parsed.second);
+            else cout << endl << "Error in command! Use help" << endl;
         }
         if (parsed.first == "create") {
-            manager.create();
+            if (parsed.second == "-")
+                manager.create();
+            else cout << endl << "Error in command! Use help" << endl;
         }
         if (parsed.first == "append") {
             //проверка на наличие пробела find должна вернуть -1
-            manager.appendInfo("");
+            if (parsed.second.find(" ") == -1)
+                manager.appendInfo("");
+            else cout << endl << "Error in command! Use help" << endl;
         }
         if (parsed.first == "help") {
-            help();
+            if (parsed.second == "-")
+                help();
+            else cout << endl << "Error in command! Use help" << endl;
         }
     }
     return 0;
@@ -57,12 +70,17 @@ int main() {
 pair<string, string> searchForCommandAndName(string toPharse) {
     string::size_type posOfSpace;
     posOfSpace = toPharse.find(' ');
+    string empty = "-";
     if (posOfSpace == -1) {
-        return (toPharse, "-");
+        pair<string, string> toReturn(toPharse, empty);
+        return toReturn;
     }
     //TODO: Разбить на подстроки и вернуть их
     else {
-
+        string secondPart = toPharse.substr(posOfSpace + 1, toPharse.length());
+        string firstPart = toPharse.substr(0, posOfSpace);
+        pair<string, string> toReturn(firstPart, secondPart);
+        return toReturn;
     }
 }
 void help() {
