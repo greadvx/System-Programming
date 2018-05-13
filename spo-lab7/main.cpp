@@ -55,7 +55,7 @@ int main() {
         if (parsed.first == "append") {
             //проверка на наличие пробела find должна вернуть -1
             if (parsed.second.find(" ") == -1)
-                manager.appendInfo("");
+                manager.appendInfo(parsed.second);
             else cout << endl << "Error in command! Use help" << endl;
         }
         if (parsed.first == "help") {

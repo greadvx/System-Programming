@@ -38,14 +38,13 @@ bool FileManager::createFileSystem() {
 
 bool FileManager::ls() {
 
-    //TODO: collection with sum of getsizes!!!
     ///cout fileName and its size
     if (allFilesTable.size() == 0) {
         return false;
     }
     map<string, int> listing;
     for (auto it = allFilesTable.begin(); it != allFilesTable.end(); it++)
-        if ((*it).isFirstPart())
+        if ((*it).isFirstPart() && (*it).getBusyFlag())
             listing.insert(pair((*it).getFileName(), (*it).getSizeOfFile()));
     for (auto it = allFilesTable.begin(); it != allFilesTable.end(); it++) {
         if ((*it).getAnotherPartExistence()) {
@@ -93,6 +92,7 @@ bool FileManager::create() {
         if (it->first >= sizeOfInputedData)
             numberOfFreeCell = it->second;
             freeCells.erase(it);
+            break;
     }
     long int currOffset;
     if (numberOfFreeCell >= 0) {
@@ -105,8 +105,7 @@ bool FileManager::create() {
         int size = sizeOfInputedData;
         char buffer[sizeOfInputedData];
         strcpy(buffer, dataToWrite.c_str());
-        strcat(buffer, "\0");
-        this->filesystem.write(reinterpret_cast<char*>(&buffer), sizeOfInputedData);
+        this->filesystem.write(buffer, sizeOfInputedData);
         return true;
     }
     if (allFilesTable.empty()) {
@@ -137,8 +136,9 @@ bool FileManager::del(string file) {
         return false;
 
     for (int i = 0; i < allFilesTable.size(); i++){
-        if (this->allFilesTable[i].getFileName() == file)
+        if (this->allFilesTable[i].getFileName() == file) {
             this->allFilesTable[i].setBusyFlag(false);
+        }
     }
 
 }
@@ -191,7 +191,7 @@ bool FileManager::open(string file) {
     return true;
 }
 
-bool FileManager::rename(string newName, string oldName) {
+bool FileManager::rename(string oldName, string newName) {
     ///searching in collection and renaming
     if (newName.length() >= 25) {
         cout << "Too long name. Max - 24 sym" << endl;
@@ -219,7 +219,7 @@ int FileManager::append(string toFile) {
     string information;
     fflush(stdin);
     cin >> information;
-    int length = information.length();
+    int length = information.length() + 1;
     int numberInTable = -1;
     for (auto it = freeCells.begin(); it != freeCells.end(); it++) {
         if ((*it).first >= information.length()) {
@@ -228,22 +228,33 @@ int FileManager::append(string toFile) {
         }
     }
     if (numberInTable != -1) {
+        char buffer[length];
+        strcpy(buffer, information.c_str());
         allFilesTable[numberInTable].setNewFileName(toFile.c_str());
         allFilesTable[numberInTable].setBusyFlag(true);
         allFilesTable[numberInTable].setFileSize(information.length());
         allFilesTable[numberInTable].setRecordNumber(false);
         this->moveWritePointer(allFilesTable[numberInTable].getOffset());
-        this->filesystem.write(information.c_str(), information.length());
+        this->filesystem.write(buffer, length);
+        this->refresh();
     }
-
+    else {
+        char buffer[length];
+        strcpy(buffer, information.c_str());
+        long offset = allFilesTable.back().getOffset() + allFilesTable.back().getSizeOfFile();
+        this->moveWritePointer(offset);
+        this->filesystem.write(buffer, length);
+        this->refresh();
+    }
     FileRecord newRecord(toFile.c_str(), length,
                          allFilesTable.back().getOffset()
                          + allFilesTable.back().getSizeOfFile()
     );
     newRecord.setRecordNumber(false);
     allFilesTable.push_back(newRecord);
-    //посмотреть на свободные ячейки.
-    return (allFilesTable.size() - 1);
+    int num = allFilesTable.size();
+    num -= 1;
+    return num;
 }
 
 void FileManager::moveReadPointer(long int offset) {
@@ -293,7 +304,10 @@ bool FileManager::appendInfo(string toFile) {
     for (auto it = allFilesTable.begin(); it != allFilesTable.end(); it++) {
         if ((*it).getFileName() == toFile && !(*it).getAnotherPartExistence()) {
             (*it).setHasAnotherPart(true);
-            (*it).setAnotherPart(this->append(toFile));
+            int index = it - allFilesTable.begin();
+            int num = append(toFile);
+            allFilesTable[index].setAnotherPart(num);
+            break;
         }
     }
     return true;
