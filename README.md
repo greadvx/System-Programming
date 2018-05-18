@@ -12,3 +12,11 @@ Repository for BSUIR lab's System Programming. Wrote on C++ and C languages.
     
 ## spo-lab4 UNIX and Windows:     
     Like spo-lab2, but created using threads and mutexes.
+    
+## spo-lab5 UNIX and Windows:
+    Async operation on files. Needs to add func of r/w in dynamic library.
+
+## spo-lab6 Memory managment. Single system.
+   
+## spo-lab7 Cross-Platform filesystem
+    Emulator of filesystem.
